@@ -10,9 +10,11 @@ Open `index.html` in a browser or run a static server from this folder (`python 
 
 1. Create a Supabase project.
 2. Run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor.
-3. In Project Settings → API, copy Project URL and the publishable (anon) key into `SUPABASE_URL` and `SUPABASE_ANON_KEY` at the top of `app.js`.
+3. The Project URL and browser-safe publishable key are configured at the top of `app.js`. Only the publishable (anon) key belongs in the browser.
 4. Enable email authentication and configure allowed redirect URLs for local/public domains.
-5. Sign up at least one account. To make an administrator, follow the commented SQL at the bottom of the schema. Farmer profiles default to pending approval; an admin can approve accounts in Supabase Table Editor.
+5. For an existing project that already ran the old schema, run [`supabase/migration_approvals.sql`](supabase/migration_approvals.sql) in the SQL Editor before deploying the updated app. Register your account, then run the final promotion statement in that file after replacing `your-admin-email@example.com` (the promotion can be run again after signup); it returns `id`, `role`, and `is_approved` for verification. Farmer profiles remain pending until an admin approves them in the in-app Dashboard.
+
+Admins can approve or reject farmer accounts and produce listings in the in-app Dashboard. Pending farmers see an approval message and can create listings after approval. The session is managed by Supabase Auth and restored after refresh.
 
 Only the public publishable/anon key belongs in the browser. Never publish the service-role key or database password. Supabase Auth and Row Level Security protect data; the browser uses Supabase's parameterized PostgREST API.
 
@@ -22,4 +24,4 @@ The ER diagram is in [`docs/er-diagram.md`](docs/er-diagram.md). The schema incl
 
 ## Deploy
 
-Deploy this static folder to Netlify, Vercel, or GitHub Pages. Set Supabase URL and public key in `app.js`, then configure the deployed domain in Supabase Auth settings. Use HTTPS.
+Deploy this static folder to Netlify, Vercel, or GitHub Pages. Add the deployed domain to Supabase Auth's allowed redirect URLs. Use HTTPS.
