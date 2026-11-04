@@ -11,7 +11,7 @@ Open `index.html` in a browser or run a static server from this folder (`python 
 1. Create a Supabase project.
 2. Run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor.
 3. The Project URL and browser-safe publishable key are configured at the top of `app.js`. Only the publishable (anon) key belongs in the browser.
-4. Enable email authentication and configure allowed redirect URLs for local/public domains.
+4. In Supabase **Authentication → URL Configuration**, set **Site URL** to `https://harvestlink-sand.vercel.app` and add that URL to the allowed redirect URLs. Signup links in the app explicitly return to this live site. If email confirmation is enabled, users must confirm before signing in.
 5. For an existing project that already ran the old schema, run [`supabase/migration_approvals.sql`](supabase/migration_approvals.sql) in the SQL Editor before deploying the updated app. Register your account, then run the final promotion statement in that file after replacing `your-admin-email@example.com` (the promotion can be run again after signup); it returns `id`, `role`, and `is_approved` for verification. Farmer profiles remain pending until an admin approves them in the in-app Dashboard.
 
 Admins can approve or reject farmer accounts and produce listings in the in-app Dashboard. Pending farmers see an approval message and can create listings after approval. The session is managed by Supabase Auth and restored after refresh.
