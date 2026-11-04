@@ -1,7 +1,7 @@
 /* Configure the Supabase project in SUPABASE_URL and SUPABASE_ANON_KEY below.
    The public anon/publishable key is safe for browser use with the supplied RLS policies. */
 const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_ANON_KEY = "sb_publishable_45446mdcAdaAlJCawB_oWw_peRB18ve";
 const demoProducts = [
  {id:"demo-tomatoes",name:"Heirloom tomatoes",category:"vegetables",price:180,unit:"kg",quantity:34,location:"Kiambu",farmer_name:"Wanjiku's Garden",image_url:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=80"},
  {id:"demo-avocado",name:"Hass avocados",category:"fruits",price:220,unit:"kg",quantity:26,location:"Murang'a",farmer_name:"Green Valley Farm",image_url:"https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=700&q=80"},
