@@ -1,6 +1,6 @@
 # HarvestLink
 
-Responsive farm-to-market marketplace prototype. Public sections include Home, About, Catalogue, Farmer Profiles and Contact. Dialogs provide registration/sign-in, product details and cart. The client includes a sample catalogue when running without credentials.
+Responsive farm-to-market marketplace prototype. Public sections include Home, About, Catalogue, Farmer Profiles and Contact. Dialogs provide registration/sign-in, product details and cart. Farmer workspaces support listing create/edit/remove; administrator workspaces support farmer/listing approval, order status updates, and printable receipts. The client includes a sample catalogue when running without credentials.
 
 ## Run
 
