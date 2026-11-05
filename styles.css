@@ -8,3 +8,49 @@
 .form-hint.auth-error{margin-top:14px;padding:10px 12px;border-radius:4px;background:#fbf0ed;color:#963f32;font-size:12px}.form-hint.auth-loading{margin-top:14px;color:#63734e;font-size:12px}.button:disabled{opacity:.7;cursor:wait}
 .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.product-purchase,.product-detail-purchase{display:flex;align-items:center;gap:8px;margin-top:12px}.product-purchase input,.product-detail-purchase input{width:66px;min-width:0;padding:8px;border:1px solid #dce2d5;border-radius:3px;background:white}.product-purchase .small-action{padding:9px 11px}.small-action:disabled,.button:disabled{opacity:.55;cursor:not-allowed}.product-stock.out-of-stock,.stock-status.out-of-stock{color:#a14d3d;font-weight:700}.product-photo img[hidden],.cart-row img[hidden],.allocation-card img[hidden],.product-detail-image[hidden]{display:none}.cart-empty{padding:22px;text-align:center;color:var(--muted);background:#f5f5ee;border-radius:4px}.cart-farmer-group{padding:14px 0;border-top:1px solid var(--line)}.cart-farmer-group>h3{font-family:var(--display);font-size:14px;color:var(--forest);margin:0 0 4px}.cart-row{grid-template-columns:56px minmax(0,1fr) auto;align-items:center}.cart-row-info{min-width:0}.cart-controls{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.cart-controls .small-action{padding:5px 8px}.farmer-subtotal{display:flex;justify-content:space-between;padding:10px 2px 2px;font-size:11px;color:var(--muted)}.farmer-subtotal strong{color:var(--forest)}.cart-modal{max-height:88vh;overflow:auto}.cart-modal form{border-top:1px solid var(--line);margin-top:18px;padding-top:12px}.cart-modal form .form-hint{font-size:11px}.allocation-grid{display:grid;gap:12px}.allocation-card{display:grid;grid-template-columns:94px minmax(0,1fr);gap:13px;padding:12px;background:#fbfaf5;border:1px solid var(--line);border-radius:5px}.allocation-card>img{width:94px;height:94px;object-fit:cover;border-radius:3px;background:#eef0e7}.allocation-body{min-width:0}.allocation-title{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.allocation-title h4{font-family:var(--display);font-size:13px;color:var(--forest);margin:0 0 3px}.allocation-quantity{font-size:9px;color:var(--muted);text-align:right}.stock-status{display:inline-block;font-size:9px;color:#537044;font-weight:700}.stock-status.inactive{color:#8a7460}.allocation-edit{display:flex;gap:8px;align-items:end;margin-top:10px;flex-wrap:wrap}.allocation-edit label,.allocation-admin-row label{display:flex;flex-direction:column;gap:4px;font-size:9px;color:var(--muted)}.allocation-edit input,.allocation-admin-row input,.allocation-admin-row select{width:94px;padding:7px;border:1px solid #dce2d5;border-radius:3px;background:white;font-size:11px}.allocation-admin-row{display:flex;align-items:end;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap}.allocation-admin-row input[name=product_name]{width:120px}.allocation-admin-row .admin-allocation-active{display:flex;flex-direction:row;align-items:center;gap:5px}.allocation-admin-row .admin-allocation-active input{width:auto}.farmer-order{display:flex;justify-content:space-between;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line);font-size:11px}.farmer-order strong,.farmer-order small{display:block}.farmer-order small{margin-top:4px;color:var(--muted);line-height:1.5}.farmer-order time{font-size:9px;color:var(--muted);white-space:nowrap}
 @media(max-width:700px){.product-purchase{gap:6px}.product-purchase input{width:56px}.cart-row{grid-template-columns:46px minmax(0,1fr);gap:9px}.cart-row>img{width:46px;height:46px}.cart-controls{grid-column:2;flex-direction:row;align-items:center;justify-content:space-between}.allocation-card{grid-template-columns:66px minmax(0,1fr);gap:9px;padding:9px}.allocation-card>img{width:66px;height:66px}.allocation-title{display:block}.allocation-quantity{text-align:left;display:block;margin-top:4px}.allocation-edit{gap:6px}.allocation-edit input{width:76px}.allocation-admin-row{align-items:stretch}.allocation-admin-row label{flex:1 1 40%}.allocation-admin-row input,.allocation-admin-row select,.allocation-admin-row input[name=product_name]{width:100%}.allocation-admin-row .admin-allocation-active{flex:0 0 auto}.cart-modal{padding:25px 19px}}
+
+/* Horizontal page panels. Each panel owns its vertical scroll area. */
+:root{--header-height:82px}
+html{height:100%;scroll-behavior:auto;overflow:hidden}
+body{height:100%;min-height:100%;overflow:hidden}
+.site-header{position:fixed;left:50%;top:0;transform:translateX(-50%);width:min(100%,1440px);max-width:1440px;margin:0;height:var(--header-height);z-index:100;background:var(--paper);box-shadow:0 2px 12px #1024190c}
+.site-header.scrolled{height:68px;box-shadow:0 5px 22px #10241920}
+.site-header.scrolled + .panel-track{height:calc(100dvh - 68px);margin-top:68px}
+.panel-track{display:flex;gap:0;width:100%;height:calc(100dvh - var(--header-height));margin-top:var(--header-height);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.panel-track::-webkit-scrollbar,.page-panel::-webkit-scrollbar{display:none}
+.page-panel{flex:0 0 100%;width:100%;height:100%;min-width:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scroll-snap-align:start;scroll-snap-stop:always;scrollbar-width:none;-webkit-overflow-scrolling:touch;outline:none}
+.page-panel[aria-hidden="true"]{visibility:visible}
+.panel-content{min-height:100%;display:flex;flex-direction:column;justify-content:center}
+.page-panel#shop{padding:0;scroll-margin:0}
+.page-panel#shop>.panel-content{min-height:100%;justify-content:flex-start}
+.page-panel#farmers .panel-content,.page-panel#story .panel-content{min-height:100%;justify-content:center}
+.page-panel#contact .panel-content{min-height:100%;justify-content:center}
+.site-header .main-nav a[aria-current="page"],.site-header [aria-current="page"]{color:var(--forest);font-weight:700}
+.site-header .main-nav a[aria-current="page"]{position:relative}
+.site-header .main-nav a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--leaf)}
+.utility-panel{display:flex;align-items:flex-start;justify-content:center;padding:clamp(20px,5vh,54px) 16px;background:var(--cream)}
+.panel-card{position:relative;width:min(720px,100%);max-height:100%;overflow:auto;padding:clamp(22px,4vw,38px);border-radius:7px;background:var(--paper);box-shadow:0 16px 55px #10241918}
+.panel-card h2{font-size:clamp(27px,4vw,36px);margin:12px 32px 20px 0}
+.auth-panel{width:min(520px,100%)}
+.cart-panel{width:min(760px,100%)}
+.dashboard-panel{width:min(1040px,100%)}
+.panel-close{position:absolute;right:18px;top:14px;width:36px;height:36px;border:0;border-radius:50%;background:#f0f2e8;color:var(--forest);font-size:25px;line-height:1;cursor:pointer}
+.cart-panel form{border-top:1px solid var(--line);margin-top:18px;padding-top:12px}
+.cart-panel form .form-hint{font-size:11px}
+.cart-panel .cart-total{position:sticky;bottom:0;background:var(--paper);padding:10px 0}
+.page-panel .section{width:100%}
+@media(max-width:700px){
+  :root{--header-height:68px}
+  .site-header{width:100%;padding:0 4%;}
+  .site-header.scrolled{height:58px}
+  .site-header.scrolled + .panel-track{height:calc(100dvh - 58px);margin-top:58px}
+  .panel-track{scroll-snap-type:x mandatory}
+  .utility-panel{padding:16px 12px}
+  .panel-card{padding:25px 20px}
+  .page-panel#home .hero{min-height:0}
+  .page-panel#farmers .panel-content,.page-panel#story .panel-content{justify-content:flex-start}
+  .page-panel#farmers .farmer-feature{min-height:100%}
+  .page-panel#contact .panel-content{justify-content:flex-start}
+}
+@media(max-width:380px){.site-header{padding-left:2%;padding-right:2%}.brand{font-size:16px;gap:5px}.brand-mark{width:26px;height:26px}.menu-toggle{margin-right:3px;padding:4px}.header-actions{gap:2px}.icon-button{font-size:10px}.cart-button{padding:7px 6px;font-size:9px}.cart-button span{min-width:17px;height:17px;margin-left:3px}}
+@media(prefers-reduced-motion:reduce){.panel-track{scroll-behavior:auto}.button{transition:none}}

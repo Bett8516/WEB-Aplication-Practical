@@ -20,7 +20,7 @@ function readSavedCart(){
     return Object.fromEntries(Object.entries(saved).map(([key,qty])=>[key.includes(":")?key:`produce:${key}`,Number(qty)||0]).filter(([,qty])=>qty>0));
   }catch{return {}}
 }
-const state={products:demoProducts,category:"all",query:"",cart:readSavedCart(),user:null,profile:null,client:null,mode:"login",cartSave:Promise.resolve()};
+const state={products:demoProducts,category:"all",query:"",cart:readSavedCart(),user:null,profile:null,client:null,mode:"login",cartSave:Promise.resolve(),activePanel:null,returnPanel:"home",isNavigating:false,navigationTimer:null};
 const $=selector=>document.querySelector(selector);
 const money=value=>`KES ${Number(value||0).toLocaleString("en-KE")}`;
 function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
@@ -29,6 +29,38 @@ function relation(value){return Array.isArray(value)?value[0]||{}:value||{}}
 function productKey(product){return `${product.itemType}:${product.id}`}
 function findProduct(key){return state.products.find(product=>productKey(product)===key)}
 function notify(message){const toast=$("#toast");toast.textContent=message;toast.classList.add("show");clearTimeout(notify.timer);notify.timer=setTimeout(()=>toast.classList.remove("show"),2800)}
+
+const panelIds=["home","shop","farmers","story","contact","signin","dashboard","cart"];
+const utilityPanels=new Set(["signin","dashboard","cart"]);
+const panelAliases={catalogue:"shop",about:"story"};
+function setActivePanel(id,{writeHash=false,focus=false,scroll=true}={}){
+  id=panelAliases[id]||id;
+  if(!panelIds.includes(id))id="home";
+  const current=state.activePanel;
+  if(current&&!utilityPanels.has(current)&&utilityPanels.has(id))state.returnPanel=current;
+  state.activePanel=id;
+  document.querySelectorAll(".page-panel").forEach(panel=>{
+    const active=panel.id===id;panel.inert=!active;panel.setAttribute("aria-hidden",String(!active));
+  });
+  document.querySelectorAll(".main-nav a").forEach(link=>{
+    if(link.hash===`#${id}`)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current");
+  });
+  const actionPanels={"dashboard-button":"dashboard","account-button":"signin","cart-button":"cart"};
+  Object.entries(actionPanels).forEach(([buttonId,panelId])=>{
+    const button=$(`#${buttonId}`);if(button){if(id===panelId)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current");}
+  });
+  const panel=$(`#${id}`),track=$("#panel-track");
+  if(panel&&scroll){
+    state.isNavigating=true;clearTimeout(state.navigationTimer);
+    state.navigationTimer=setTimeout(()=>{state.isNavigating=false;},900);
+    track.scrollTo({left:panel.offsetLeft,behavior:"smooth"});
+  }
+  document.querySelector(".site-header").classList.toggle("scrolled",Boolean(panel?.scrollTop));
+  if(writeHash&&location.hash!==`#${id}`)history.pushState(null,"",`#${id}`);
+  if(focus&&panel)setTimeout(()=>panel.focus({preventScroll:true}),350);
+}
+function goToPanel(id,options={}){setActivePanel(id,{writeHash:true,focus:true,...options})}
+function closePanel(){goToPanel(state.returnPanel||"home")}
 
 function renderProducts(){
   const list=state.products.filter(product=>(state.category==="all"||product.category===state.category)&&`${product.name} ${product.farmer_name||""} ${product.location||""}`.toLowerCase().includes(state.query.toLowerCase()));
@@ -73,7 +105,7 @@ function renderCart(){
   $("#cart-total").textContent=money(rows.reduce((sum,row)=>sum+row.product.price*row.quantity,0));
 }
 
-function openAuth(mode="login"){state.mode=mode;syncAuth();$("#account-modal").showModal()}
+function openAuth(mode="login"){state.mode=mode;syncAuth();goToPanel("signin")}
 function syncAuth(){
   const registering=state.mode==="register";
   document.querySelectorAll(".auth-tab").forEach(button=>button.classList.toggle("active",button.dataset.mode===state.mode));
@@ -128,16 +160,16 @@ async function authSubmit(event){
       ?await state.client.auth.signUp({email,password,options:{emailRedirectTo:AUTH_REDIRECT_URL,data:{full_name:$("#full-name").value.trim(),role:$("#account-role").value}}})
       :await state.client.auth.signInWithPassword({email,password});
     if(result.error){showAuthMessage(authMessage(result.error));return;}
-    if(state.mode==="register"&&!result.data.session){$("#account-modal").close();notify("Account created. Confirm your email before signing in.");return;}
+    if(state.mode==="register"&&!result.data.session){notify("Account created. Confirm your email before signing in.");showAuthMessage("Check your inbox to confirm your email, then sign in.","loading");return;}
     state.user=result.data.user;await refreshProfile();if(!state.profile)throw new Error("Your HarvestLink profile was not found. Contact the site administrator.");
-    await restoreAndMergeCart();$("#account-modal").close();syncAccount();syncDashboard();
+    await restoreAndMergeCart();syncAccount();syncDashboard();
     notify(state.mode==="register"?"Account created. Welcome to HarvestLink!":"Welcome back!");await routeByRole();
   }catch(error){showAuthMessage(authMessage(error));}
   finally{button.disabled=false;button.innerHTML=label;}
 }
 function syncAccount(){$("#account-button").innerHTML=state.user?`♙ <span>${esc(state.profile?.full_name||state.user.email.split("@")[0])} · Sign out</span>`:`♙ <span>Sign in</span>`}
 function syncDashboard(){$("#dashboard-button").hidden=false}
-async function routeByRole(){if(!state.profile)return;if(state.profile.role==="buyer"){location.hash="#catalogue";return;}await loadDashboard();}
+async function routeByRole(){if(!state.profile)return;if(state.profile.role==="buyer"){goToPanel("shop");return;}await loadDashboard();}
 
 function allocationCard(row){
   const config=relation(row.default_allocation),remaining=Math.max(0,row.allocated_qty-row.sold_qty),out=Number(row.available_qty)===0;
@@ -182,7 +214,7 @@ async function loadAdminDashboard(root){
 }
 
 async function loadDashboard(){
-  if(!state.client||!state.profile)return;const root=$("#dashboard-content");root.innerHTML="<p>Loading workspace…</p>";$("#dashboard-title").textContent=state.profile.role==="admin"?"Admin dashboard":"Your farm";$("#dashboard-modal").showModal();
+  if(!state.client||!state.profile){openAuth("login");return;}const root=$("#dashboard-content");root.innerHTML="<p>Loading workspace…</p>";$("#dashboard-title").textContent=state.profile.role==="admin"?"Admin dashboard":"Your farm";goToPanel("dashboard");
   if(state.profile.role==="farmer"&&!state.profile.is_approved){root.innerHTML=`<section class="pending-notice"><div class="eyebrow">FARMER ACCOUNT</div><h3>${state.profile.is_rejected?"Your farmer application was declined":"Your farmer account is awaiting approval"}</h3><p>${state.profile.is_rejected?"An administrator reviewed your application. Please contact HarvestLink for next steps.":"Thanks for joining HarvestLink. An administrator will review your account. You can manage your starter goods after approval."}</p></section>`;return;}
   if(state.profile.role==="farmer")return loadFarmerDashboard(root);
   if(state.profile.role==="admin")return loadAdminDashboard(root);
@@ -191,7 +223,7 @@ async function loadDashboard(){
 
 function openCheckout(){
   if(!cartRows().length){notify("Your cart is empty");return;}
-  if(!state.user){$("#cart-modal").close();openAuth("login");notify("Sign in as a buyer to check out");return;}
+  if(!state.user){goToPanel("signin");notify("Sign in as a buyer to check out");return;}
   if(state.profile?.role!=="buyer"){notify("Checkout is available to buyer accounts");return;}
   $("#delivery-name").value=state.profile.full_name||"";$("#delivery-phone").value=state.profile.phone||"";$("#delivery-location").value=state.profile.location||"";
   $("#checkout-message").textContent="";$("#checkout-form").classList.remove("hidden");$("#checkout-button").hidden=true;$("#checkout-form").scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -208,7 +240,7 @@ async function placeOrder(event){
       (data?.issues||[]).forEach(issue=>{const key=`${issue.item_type}:${issue.product_id}`,available=Number(issue.available)||0,product=findProduct(key);if(!product||available===0)delete state.cart[key];else state.cart[key]=Math.min(available,Number(product.quantity)||0);});
       persistCart();renderCart();$("#checkout-message").textContent="Some items had less stock than requested. Your cart was adjusted to the available quantities. Review it and submit again.";return;
     }
-    state.cart={};persistCart();$("#cart-modal").close();await loadProducts();notify("Order placed. Pay on delivery; M-Pesa is coming soon.");
+    state.cart={};persistCart();await loadProducts();goToPanel("shop");notify("Order placed. Pay on delivery; M-Pesa is coming soon.");
   }catch(error){$("#checkout-message").textContent=authMessage(error);}
   finally{button.disabled=false;button.textContent=label;}
 }
@@ -224,12 +256,13 @@ document.addEventListener("click",event=>{
   const change=event.target.closest("[data-qty]");if(change){const key=change.dataset.qty,product=findProduct(key);updateCartQuantity(key,(state.cart[key]||0)+Number(change.dataset.delta));if(Number(change.dataset.delta)<0&&!(state.cart[key]))notify(`${product?.name||"Item"} removed from cart`);return;}
   const remove=event.target.closest("[data-remove]");if(remove){const product=findProduct(remove.dataset.remove);delete state.cart[remove.dataset.remove];persistCart();renderCart();notify(`${product?.name||"Item"} removed from cart`);return;}
   const card=event.target.closest("[data-product]");if(card&&!event.target.closest("button,input,select,a"))showProduct(card.dataset.product);
+  const panelClose=event.target.closest("[data-panel-close]");if(panelClose){closePanel();return;}
   const close=event.target.closest("[data-close]");if(close)close.closest("dialog").close();
 });
 
 document.querySelectorAll(".filter-chip").forEach(button=>button.addEventListener("click",()=>{state.category=button.dataset.category;document.querySelectorAll(".filter-chip").forEach(chip=>chip.classList.toggle("active",chip===button));renderProducts();}));
 $("#search-input").addEventListener("input",event=>{state.query=event.target.value;renderProducts();});
-$("#cart-button").onclick=()=>{renderCart();$("#cart-modal").showModal();};
+$("#cart-button").onclick=()=>{renderCart();goToPanel("cart");};
 $("#checkout-button").onclick=openCheckout;
 $("#checkout-form").addEventListener("submit",placeOrder);
 $("#account-button").onclick=async()=>{if(!state.user){openAuth("login");return;}try{const {error}=await state.client.auth.signOut();if(error)throw error;state.user=null;state.profile=null;syncAccount();syncDashboard();notify("Signed out");}catch(error){notify(authMessage(error));}};
@@ -238,15 +271,39 @@ document.querySelectorAll(".auth-tab").forEach(button=>button.onclick=()=>{state
 $("#join-button").onclick=()=>$("#farmer-modal").showModal();
 $("#farmer-signup").onclick=()=>{$("#farmer-modal").close();openAuth("register");};
 $("#menu-toggle").onclick=()=>{const open=$("#main-nav").classList.toggle("open");$("#menu-toggle").setAttribute("aria-expanded",String(open));};
-document.querySelectorAll(".main-nav a").forEach(link=>link.onclick=()=>{$("#main-nav").classList.remove("open");$("#menu-toggle").setAttribute("aria-expanded","false");});
+document.querySelectorAll(".main-nav a[href^='#']").forEach(link=>link.onclick=event=>{event.preventDefault();goToPanel(link.hash.slice(1));$("#main-nav").classList.remove("open");$("#menu-toggle").setAttribute("aria-expanded","false");});
+window.addEventListener("hashchange",()=>{
+  const id=panelAliases[location.hash.slice(1)]||location.hash.slice(1);
+  setActivePanel(id,{scroll:true});
+  if(id==="dashboard"){if(state.user)loadDashboard();else openAuth("login");}
+  if(id==="cart")renderCart();
+  if(id==="signin")syncAuth();
+});
+document.querySelectorAll(".page-panel").forEach(panel=>panel.addEventListener("scroll",()=>{
+  if(panel.id===state.activePanel)document.querySelector(".site-header").classList.toggle("scrolled",panel.scrollTop>8);
+},{passive:true}));
+const panelObserver=new IntersectionObserver(entries=>{
+  if(state.isNavigating)return;
+  const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+  if(visible&&visible.intersectionRatio>=0.6&&visible.target.id!==state.activePanel)setActivePanel(visible.target.id,{writeHash:true,scroll:false});
+},{root:$("#panel-track"),threshold:[0.6,0.8,1]});
+document.querySelectorAll(".page-panel").forEach(panel=>panelObserver.observe(panel));
+document.addEventListener("keydown",event=>{
+  if(event.altKey||event.ctrlKey||event.metaKey||event.target.matches("input,textarea,select,[contenteditable='true']"))return;
+  if(document.querySelector("dialog[open]"))return;
+  if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;
+  const index=panelIds.indexOf(state.activePanel);const next=index+(event.key==="ArrowRight"?1:-1);
+  if(next>=0&&next<panelIds.length){event.preventDefault();goToPanel(panelIds[next]);}
+});
 
-renderProducts();persistCart();syncAccount();syncDashboard();syncAuth();
-$("#dashboard-button").onclick=()=>{if(!state.user){openAuth("login");return;}if(state.profile?.role==="buyer"){location.hash="#catalogue";notify("Your shop is ready");return;}loadDashboard();};
+renderProducts();renderCart();persistCart();syncAccount();syncDashboard();syncAuth();
+$("#dashboard-button").onclick=()=>{if(!state.user){openAuth("login");return;}if(state.profile?.role==="buyer"){goToPanel("shop");notify("Your shop is ready");return;}loadDashboard();};
 if(window.supabase&&SUPABASE_CONFIGURED){
   state.products=[];renderProducts();state.client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-  state.client.auth.getSession().then(async({data,error})=>{if(error){notify(authMessage(error));return;}state.user=data.session?.user||null;if(state.user){try{await refreshProfile();await restoreAndMergeCart();}catch(profileError){notify(authMessage(profileError));}}syncAccount();syncDashboard();});
+  state.client.auth.getSession().then(async({data,error})=>{if(error){notify(authMessage(error));return;}state.user=data.session?.user||null;if(state.user){try{await refreshProfile();await restoreAndMergeCart();}catch(profileError){notify(authMessage(profileError));}}syncAccount();syncDashboard();if(state.activePanel==="dashboard"){if(state.user)await loadDashboard();else openAuth("login");}});
   state.client.auth.onAuthStateChange((_event,session)=>{state.user=session?.user||null;if(!state.user)state.profile=null;setTimeout(async()=>{try{if(state.user)await refreshProfile();}catch(error){notify(authMessage(error));}syncAccount();syncDashboard();},0);});
   loadProducts();$("#auth-hint").textContent="";
 }else if(!SUPABASE_CONFIGURED){console.info("HarvestLink demo mode: Supabase credentials are missing.");}
 else{state.products=[];renderProducts();$("#catalog-message").textContent="Supabase is configured but its client library did not load. Check your connection and refresh.";console.error("Supabase client library is unavailable.");}
-document.addEventListener("scroll",()=>document.querySelector(".site-header").classList.toggle("scrolled",window.scrollY>12),{passive:true});
+setActivePanel(panelIds.includes(location.hash.slice(1))||panelAliases[location.hash.slice(1)]?location.hash.slice(1):"home");
+if(state.activePanel==="dashboard"&&!state.client)openAuth("login");
